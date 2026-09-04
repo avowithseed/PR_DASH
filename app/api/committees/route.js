@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyRegionAccess } from "@/lib/verifyRegionAccess";
 import { REGIONS } from "@/lib/regions";
+import { withErrorHandling } from "@/lib/apiHandler";
 
 // GET /api/committees?region=서울 : 특정 지역의 위원회 게첩 로스터 조회 (공개)
-export async function GET(req) {
+export const GET = withErrorHandling(async (req) => {
   const { searchParams } = new URL(req.url);
   const region = searchParams.get("region");
   const supabase = getSupabaseAdmin();
@@ -18,12 +19,12 @@ export async function GET(req) {
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ committees: data });
-}
+});
 
 // POST: 지역위원회(PIN, x-region-pin 헤더) 또는 관리자(x-admin-password 헤더)가 위원회 게첩 상태를 추가/수정
 // body: { region, name, installed, installed_date?, memo?, id? }
 // id가 있으면 해당 행을 업데이트, 없으면 (region, name) 기준으로 upsert
-export async function POST(req) {
+export const POST = withErrorHandling(async (req) => {
   const body = await req.json().catch(() => null);
   const { region, name, installed, installed_date, memo, id } = body ?? {};
 
@@ -56,10 +57,10 @@ export async function POST(req) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ committee: data });
-}
+});
 
 // DELETE: body { region, id }, x-region-pin 또는 x-admin-password 헤더 필요
-export async function DELETE(req) {
+export const DELETE = withErrorHandling(async (req) => {
   const body = await req.json().catch(() => null);
   const { region, id } = body ?? {};
   if (!REGIONS.includes(region) || !id) {
@@ -73,4 +74,4 @@ export async function DELETE(req) {
   const { error } = await supabase.from("committees").delete().eq("id", id).eq("region", region);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
-}
+});

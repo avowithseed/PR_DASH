@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyPin } from "@/lib/auth";
 import { REGIONS } from "@/lib/regions";
+import { withErrorHandling } from "@/lib/apiHandler";
 
 // POST: 지역위원회가 입력 폼에 들어가기 전에 PIN을 확인 (성공하면 이후 요청에서 같은 PIN을 헤더로 재사용)
-export async function POST(req) {
+export const POST = withErrorHandling(async (req) => {
   const body = await req.json().catch(() => null);
   const { region, pin } = body ?? {};
   if (!REGIONS.includes(region)) {
@@ -30,4 +31,4 @@ export async function POST(req) {
   if (!ok) return NextResponse.json({ error: "PIN이 일치하지 않습니다." }, { status: 401 });
 
   return NextResponse.json({ ok: true });
-}
+});

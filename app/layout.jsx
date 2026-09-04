@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "홍보통합 대시보드",
-  description: "캠페인 현장 운영 현황 대시보드",
+  title: "더불어민주당 홍보위원회 - 홍보통합 대시보드",
+  description: "홍보통합 대시보드",
 };
 
 export default function RootLayout({ children }) {

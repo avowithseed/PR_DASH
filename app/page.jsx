@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Radio, Settings } from "lucide-react";
 import { styles } from "@/lib/styles";
+import { fetchJson } from "@/lib/fetchJson";
 import BannerTab from "@/components/BannerTab";
 import ContentTab from "@/components/ContentTab";
 import SpreadTab from "@/components/SpreadTab";
@@ -18,15 +19,14 @@ export default function PRDashboard() {
   const [sns, setSns] = useState([]);
   const [contentLoading, setContentLoading] = useState(true);
   const [contentError, setContentError] = useState("");
+  const [contentLoaded, setContentLoaded] = useState(false);
   const [refreshingYoutube, setRefreshingYoutube] = useState(false);
 
   const loadRegions = useCallback(async () => {
     setRegionsError("");
     try {
-      const res = await fetch("/api/region-settings");
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "지역 데이터를 불러오지 못했습니다.");
-      setRegions(json.regions);
+      const json = await fetchJson("/api/region-settings");
+      setRegions(json.regions ?? []);
     } catch (err) {
       setRegionsError(err.message);
     } finally {
@@ -38,14 +38,10 @@ export default function PRDashboard() {
     setContentError("");
     if (refresh) setRefreshingYoutube(true);
     try {
-      const [ytRes, snsRes] = await Promise.all([
-        fetch(`/api/youtube${refresh ? "?refresh=1" : ""}`),
-        fetch("/api/sns"),
+      const [ytJson, snsJson] = await Promise.all([
+        fetchJson(`/api/youtube${refresh ? "?refresh=1" : ""}`),
+        fetchJson("/api/sns"),
       ]);
-      const ytJson = await ytRes.json();
-      const snsJson = await snsRes.json();
-      if (!ytRes.ok) throw new Error(ytJson.error || "YouTube 데이터를 불러오지 못했습니다.");
-      if (!snsRes.ok) throw new Error(snsJson.error || "SNS 데이터를 불러오지 못했습니다.");
       setYoutube(ytJson);
       setSns(snsJson.posts ?? []);
     } catch (err) {
@@ -60,24 +56,28 @@ export default function PRDashboard() {
     loadRegions();
   }, [loadRegions]);
 
+  // 콘텐츠 탭에 처음 들어갈 때 한 번만 불러옵니다. youtube/sns 상태를 의존성에 넣으면
+  // loadContent()가 매번 새 배열/객체 참조를 만들어 effect가 다시 실행되고,
+  // 다시 loadContent()를 부르는 무한 루프가 생기므로 "이미 불러왔는지" 플래그로만 제어합니다.
   useEffect(() => {
-    if (tab === "content" && (youtube === null || sns.length === 0)) {
+    if (tab === "content" && !contentLoaded) {
+      setContentLoaded(true);
       loadContent();
     }
-  }, [tab, youtube, sns, loadContent]);
+  }, [tab, contentLoaded, loadContent]);
 
   const tabs = [
     { id: "banner", label: "현수막 게첩 현황" },
     { id: "content", label: "콘텐츠 성과" },
-    { id: "spread", label: "조직 재확산" },
+    { id: "spread", label: "컨텐츠 전파현황" },
   ];
 
   return (
     <div style={styles.page}>
       <header style={styles.header}>
         <div>
-          <div style={styles.eyebrow}>홍보통합 대시보드</div>
-          <h1 style={styles.title}>캠페인 현장 운영 현황</h1>
+          <div style={styles.eyebrow}>더불어민주당 홍보위원회</div>
+          <h1 style={styles.title}>홍보통합 대시보드</h1>
         </div>
         <div style={styles.headerRight}>
           <div style={styles.updatedAt}>

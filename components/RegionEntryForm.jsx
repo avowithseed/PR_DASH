@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CheckCircle2, Trash2, X } from "lucide-react";
 import { styles } from "@/lib/styles";
+import { fetchJson } from "@/lib/fetchJson";
 
 // 지역위원회 PIN 인증 후 해당 지역의 현수막 게첩 로스터를 직접 입력/수정하는 모달 폼
 export default function RegionEntryForm({ region, committees, onClose, onUpdated }) {
@@ -20,13 +21,11 @@ export default function RegionEntryForm({ region, committees, onClose, onUpdated
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/region-pin/verify", {
+      await fetchJson("/api/region-pin/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ region, pin }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "PIN 확인에 실패했습니다.");
       setVerifiedPin(pin);
     } catch (err) {
       setError(err.message);
@@ -39,13 +38,11 @@ export default function RegionEntryForm({ region, committees, onClose, onUpdated
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/committees", {
+      await fetchJson("/api/committees", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-region-pin": verifiedPin },
         body: JSON.stringify({ region, id, ...payload }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "저장에 실패했습니다.");
       onUpdated();
     } catch (err) {
       setError(err.message);
@@ -58,13 +55,11 @@ export default function RegionEntryForm({ region, committees, onClose, onUpdated
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/committees", {
+      await fetchJson("/api/committees", {
         method: "DELETE",
         headers: { "Content-Type": "application/json", "x-region-pin": verifiedPin },
         body: JSON.stringify({ region, id }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "삭제에 실패했습니다.");
       onUpdated();
     } catch (err) {
       setError(err.message);

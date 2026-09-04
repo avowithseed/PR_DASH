@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { checkAdminPassword, hashPin } from "@/lib/auth";
 import { REGIONS } from "@/lib/regions";
+import { withErrorHandling } from "@/lib/apiHandler";
 
 // POST: 관리자가 특정 지역의 PIN을 설정/재설정 (x-admin-password 헤더 필요)
-export async function POST(req) {
+export const POST = withErrorHandling(async (req) => {
   const adminPassword = req.headers.get("x-admin-password");
   if (!checkAdminPassword(adminPassword)) {
     return NextResponse.json({ error: "관리자 인증 실패" }, { status: 401 });
@@ -27,4 +28,4 @@ export async function POST(req) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
-}
+});

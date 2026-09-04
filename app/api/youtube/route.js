@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { fetchChannelStats } from "@/lib/youtube";
+import { withErrorHandling } from "@/lib/apiHandler";
 
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15분: YouTube API 쿼터 절약용 캐시
 
 // GET /api/youtube?refresh=1 : 등록된 모든 채널의 통계를 캐시에서(또는 강제 새로고침 시 API에서) 조회
-export async function GET(req) {
+export const GET = withErrorHandling(async (req) => {
   const { searchParams } = new URL(req.url);
   const forceRefresh = searchParams.get("refresh") === "1";
 
@@ -64,4 +65,4 @@ export async function GET(req) {
     .sort((a, b) => b.views - a.views);
 
   return NextResponse.json({ channels: results, videos, totals, errors });
-}
+});

@@ -13,7 +13,7 @@ import {
 import { styles } from "@/lib/styles";
 import { SPREAD_BY_REGION, SPREAD_CONTENT } from "@/lib/sampleSpread";
 
-// 조직 재확산 탭: 아직 실데이터 연동 요청 범위 밖이라 샘플 데이터로 표시합니다.
+// 컨텐츠 전파현황 탭: 아직 실데이터 연동 요청 범위 밖이라 샘플 데이터로 표시합니다.
 export default function SpreadTab() {
   return (
     <section>

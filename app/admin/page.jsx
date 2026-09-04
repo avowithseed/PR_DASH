@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Trash2, ShieldCheck, ArrowLeft } from "lucide-react";
 import { styles } from "@/lib/styles";
 import { REGIONS } from "@/lib/regions";
+import { fetchJson } from "@/lib/fetchJson";
 
 const STORAGE_KEY = "pr_dashboard_admin_password";
 
@@ -22,18 +23,19 @@ export default function AdminPage() {
   }, []);
 
   async function verify(pw) {
-    const res = await fetch("/api/admin/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: pw }),
-    });
-    if (res.ok) {
+    try {
+      await fetchJson("/api/admin/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw }),
+      });
       setPassword(pw);
       setAuthed(true);
       sessionStorage.setItem(STORAGE_KEY, pw);
       return true;
+    } catch {
+      return false;
     }
-    return false;
   }
 
   async function handleLogin(e) {
@@ -102,20 +104,23 @@ function AdminPanel({ password, onLogout }) {
   const [snsPosts, setSnsPosts] = useState([]);
   const [newPost, setNewPost] = useState({ title: "", url: "", views: "", shares: "", engagement: "" });
   const [snsMsg, setSnsMsg] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   const loadAll = useCallback(async () => {
-    const [rRes, cRes, sRes] = await Promise.all([
-      fetch("/api/region-settings"),
-      fetch("/api/youtube/channels"),
-      fetch("/api/sns"),
-    ]);
-    const rJson = await rRes.json();
-    const cJson = await cRes.json();
-    const sJson = await sRes.json();
-    setRegions(rJson.regions ?? []);
-    setTotalsDraft(Object.fromEntries((rJson.regions ?? []).map((r) => [r.name, r.total])));
-    setChannels(cJson.channels ?? []);
-    setSnsPosts(sJson.posts ?? []);
+    setLoadError("");
+    try {
+      const [rJson, cJson, sJson] = await Promise.all([
+        fetchJson("/api/region-settings"),
+        fetchJson("/api/youtube/channels"),
+        fetchJson("/api/sns"),
+      ]);
+      setRegions(rJson.regions ?? []);
+      setTotalsDraft(Object.fromEntries((rJson.regions ?? []).map((r) => [r.name, r.total])));
+      setChannels(cJson.channels ?? []);
+      setSnsPosts(sJson.posts ?? []);
+    } catch (err) {
+      setLoadError(err.message);
+    }
   }, []);
 
   useEffect(() => {
@@ -126,13 +131,11 @@ function AdminPanel({ password, onLogout }) {
     setSavingRegion(region);
     setRegionMsg((m) => ({ ...m, [region]: "" }));
     try {
-      const res = await fetch("/api/region-settings", {
+      await fetchJson("/api/region-settings", {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({ region, total_committees: Number(totalsDraft[region]) || 0 }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
       setRegionMsg((m) => ({ ...m, [region]: "저장됨" }));
       loadAll();
     } catch (err) {
@@ -150,13 +153,11 @@ function AdminPanel({ password, onLogout }) {
     }
     setSavingRegion(region);
     try {
-      const res = await fetch("/api/region-pin", {
+      await fetchJson("/api/region-pin", {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({ region, pin }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
       setRegionMsg((m) => ({ ...m, [region]: "PIN 설정됨" }));
       setPinDraft((d) => ({ ...d, [region]: "" }));
       loadAll();
@@ -171,13 +172,11 @@ function AdminPanel({ password, onLogout }) {
     e.preventDefault();
     setChannelMsg("");
     try {
-      const res = await fetch("/api/youtube/channels", {
+      await fetchJson("/api/youtube/channels", {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify({ channel_id: newChannelId.trim(), label: newChannelLabel.trim() }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
       setNewChannelId("");
       setNewChannelLabel("");
       loadAll();
@@ -187,25 +186,28 @@ function AdminPanel({ password, onLogout }) {
   }
 
   async function deleteChannel(id) {
-    await fetch("/api/youtube/channels", {
-      method: "DELETE",
-      headers: authHeaders,
-      body: JSON.stringify({ id }),
-    });
-    loadAll();
+    setChannelMsg("");
+    try {
+      await fetchJson("/api/youtube/channels", {
+        method: "DELETE",
+        headers: authHeaders,
+        body: JSON.stringify({ id }),
+      });
+      loadAll();
+    } catch (err) {
+      setChannelMsg(err.message);
+    }
   }
 
   async function addPost(e) {
     e.preventDefault();
     setSnsMsg("");
     try {
-      const res = await fetch("/api/sns", {
+      await fetchJson("/api/sns", {
         method: "POST",
         headers: authHeaders,
         body: JSON.stringify(newPost),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
       setNewPost({ title: "", url: "", views: "", shares: "", engagement: "" });
       loadAll();
     } catch (err) {
@@ -214,8 +216,13 @@ function AdminPanel({ password, onLogout }) {
   }
 
   async function deletePost(id) {
-    await fetch("/api/sns", { method: "DELETE", headers: authHeaders, body: JSON.stringify({ id }) });
-    loadAll();
+    setSnsMsg("");
+    try {
+      await fetchJson("/api/sns", { method: "DELETE", headers: authHeaders, body: JSON.stringify({ id }) });
+      loadAll();
+    } catch (err) {
+      setSnsMsg(err.message);
+    }
   }
 
   return (
@@ -238,6 +245,8 @@ function AdminPanel({ password, onLogout }) {
           </button>
         </div>
       </header>
+
+      {loadError && <div style={styles.errorBox}>{loadError}</div>}
 
       <div style={styles.panelBlock}>
         <div style={styles.panelTitle}>지역별 총 위원회 수 · PIN 설정</div>
