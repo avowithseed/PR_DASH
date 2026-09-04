@@ -47,7 +47,49 @@ export const GET = withErrorHandling(async () => {
     };
   });
 
-  return NextResponse.json({ regions: data });
+  const nationalInstalled = data.reduce((s, r) => s + r.installedCount, 0);
+  const nationalTotal = data.reduce((s, r) => s + r.total, 0);
+  const nationalPct = nationalTotal > 0 ? Math.round((nationalInstalled / nationalTotal) * 100) : 0;
+
+  // 전일 대비 증감 표시용 스냅샷. stats_snapshots 테이블이 아직 없는 배포(마이그레이션 전)에서도
+  // 이 부분 실패가 지역 데이터 전체 응답을 막지 않도록 별도로 감쌉니다.
+  let trend = null;
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: prevSnap } = await supabase
+      .from("stats_snapshots")
+      .select("snapshot_date, installed_count, total_count")
+      .lt("snapshot_date", today)
+      .order("snapshot_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // 오늘 스냅샷이 없으면 지금 값을 오늘의 기준값으로 한 번만 저장(다음 날 비교용).
+    await supabase
+      .from("stats_snapshots")
+      .upsert(
+        { snapshot_date: today, installed_count: nationalInstalled, total_count: nationalTotal },
+        { onConflict: "snapshot_date", ignoreDuplicates: true }
+      );
+
+    if (prevSnap) {
+      const prevPct =
+        prevSnap.total_count > 0 ? Math.round((prevSnap.installed_count / prevSnap.total_count) * 100) : 0;
+      trend = { deltaPct: nationalPct - prevPct, sinceDate: prevSnap.snapshot_date };
+    }
+  } catch {
+    trend = null;
+  }
+
+  return NextResponse.json({
+    regions: data,
+    national: {
+      installedCount: nationalInstalled,
+      total: nationalTotal,
+      pct: nationalPct,
+      trend,
+    },
+  });
 });
 
 // POST: 관리자가 특정 지역의 "총 지역위원회 수"를 설정 (x-admin-password 헤더 필요)

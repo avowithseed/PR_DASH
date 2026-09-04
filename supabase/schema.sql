@@ -104,3 +104,28 @@ create policy "public read sns_posts" on sns_posts for select using (true);
 -- pin_hash는 공개 조회에서 절대 노출하면 안 되므로 뷰로 분리해서 프론트는 이 뷰만 사용합니다.
 create or replace view region_settings_public as
   select region, total_committees, updated_at from region_settings;
+
+-- 본부 현수막 게첩 지시일 (미니 캘린더에 강조 표시, 관리자가 /admin에서 추가/삭제)
+create table if not exists directives (
+  id uuid primary key default gen_random_uuid(),
+  date date not null,
+  memo text,
+  created_at timestamptz not null default now()
+);
+
+-- 전국 게첩 완료율의 일별 스냅샷 (증감 화살표 표시용 - 하루 첫 조회 시점 값을 그날의 기준값으로 저장)
+create table if not exists stats_snapshots (
+  snapshot_date date primary key,
+  installed_count integer not null,
+  total_count integer not null,
+  created_at timestamptz not null default now()
+);
+
+alter table directives enable row level security;
+alter table stats_snapshots enable row level security;
+
+drop policy if exists "public read directives" on directives;
+create policy "public read directives" on directives for select using (true);
+
+drop policy if exists "public read stats_snapshots" on stats_snapshots;
+create policy "public read stats_snapshots" on stats_snapshots for select using (true);

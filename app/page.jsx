@@ -12,8 +12,11 @@ export default function PRDashboard() {
   const [tab, setTab] = useState("banner");
 
   const [regions, setRegions] = useState([]);
+  const [national, setNational] = useState(null);
   const [regionsLoading, setRegionsLoading] = useState(true);
   const [regionsError, setRegionsError] = useState("");
+
+  const [directives, setDirectives] = useState([]);
 
   const [youtube, setYoutube] = useState(null);
   const [sns, setSns] = useState([]);
@@ -27,10 +30,21 @@ export default function PRDashboard() {
     try {
       const json = await fetchJson("/api/region-settings");
       setRegions(json.regions ?? []);
+      setNational(json.national ?? null);
     } catch (err) {
       setRegionsError(err.message);
     } finally {
       setRegionsLoading(false);
+    }
+  }, []);
+
+  const loadDirectives = useCallback(async () => {
+    try {
+      const json = await fetchJson("/api/directives");
+      setDirectives(json.directives ?? []);
+    } catch {
+      // 캘린더는 부가 정보라 조용히 빈 상태로 둡니다 (지시일 강조 표시만 안 됨).
+      setDirectives([]);
     }
   }, []);
 
@@ -54,7 +68,8 @@ export default function PRDashboard() {
 
   useEffect(() => {
     loadRegions();
-  }, [loadRegions]);
+    loadDirectives();
+  }, [loadRegions, loadDirectives]);
 
   // 콘텐츠 탭에 처음 들어갈 때 한 번만 불러옵니다. youtube/sns 상태를 의존성에 넣으면
   // loadContent()가 매번 새 배열/객체 참조를 만들어 effect가 다시 실행되고,
@@ -99,8 +114,8 @@ export default function PRDashboard() {
             onClick={() => setTab(t.id)}
             style={{
               ...styles.tabButton,
-              color: tab === t.id ? "#1B2430" : "#8A9099",
-              borderBottomColor: tab === t.id ? "#223A5E" : "transparent",
+              color: tab === t.id ? "#0D47A1" : "#8A9099",
+              borderBottomColor: tab === t.id ? "#0D47A1" : "transparent",
             }}
           >
             {t.label}
@@ -109,7 +124,14 @@ export default function PRDashboard() {
       </nav>
 
       {tab === "banner" && (
-        <BannerTab regions={regions} loading={regionsLoading} error={regionsError} onRefresh={loadRegions} />
+        <BannerTab
+          regions={regions}
+          national={national}
+          directives={directives}
+          loading={regionsLoading}
+          error={regionsError}
+          onRefresh={loadRegions}
+        />
       )}
 
       {tab === "content" && (

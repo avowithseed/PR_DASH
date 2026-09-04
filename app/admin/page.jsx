@@ -106,6 +106,10 @@ function AdminPanel({ password, onLogout }) {
   const [snsMsg, setSnsMsg] = useState("");
   const [loadError, setLoadError] = useState("");
 
+  const [directives, setDirectives] = useState([]);
+  const [newDirective, setNewDirective] = useState({ date: "", memo: "" });
+  const [directiveMsg, setDirectiveMsg] = useState("");
+
   const loadAll = useCallback(async () => {
     setLoadError("");
     try {
@@ -120,6 +124,14 @@ function AdminPanel({ password, onLogout }) {
       setSnsPosts(sJson.posts ?? []);
     } catch (err) {
       setLoadError(err.message);
+    }
+    // directives는 별도 마이그레이션이 필요한 테이블이라, 아직 적용 전이어도
+    // 위의 핵심 관리자 데이터 로딩이 막히지 않도록 따로 처리합니다.
+    try {
+      const dJson = await fetchJson("/api/directives");
+      setDirectives(dJson.directives ?? []);
+    } catch (err) {
+      setDirectiveMsg(err.message);
     }
   }, []);
 
@@ -225,6 +237,36 @@ function AdminPanel({ password, onLogout }) {
     }
   }
 
+  async function addDirective(e) {
+    e.preventDefault();
+    setDirectiveMsg("");
+    if (!newDirective.date) {
+      setDirectiveMsg("날짜를 선택하세요.");
+      return;
+    }
+    try {
+      await fetchJson("/api/directives", {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify(newDirective),
+      });
+      setNewDirective({ date: "", memo: "" });
+      loadAll();
+    } catch (err) {
+      setDirectiveMsg(err.message);
+    }
+  }
+
+  async function deleteDirective(id) {
+    setDirectiveMsg("");
+    try {
+      await fetchJson("/api/directives", { method: "DELETE", headers: authHeaders, body: JSON.stringify({ id }) });
+      loadAll();
+    } catch (err) {
+      setDirectiveMsg(err.message);
+    }
+  }
+
   return (
     <div style={styles.page}>
       <header style={styles.header}>
@@ -305,7 +347,7 @@ function AdminPanel({ password, onLogout }) {
         <form onSubmit={addChannel} style={styles.formRow}>
           <input
             style={{ ...styles.formInput, marginBottom: 0 }}
-            placeholder="채널 ID (예: UCxxxxxxxxxxxxxx)"
+            placeholder="채널 ID(UCxxxx...) 또는 @핸들(예: @minjoodang_tv)"
             value={newChannelId}
             onChange={(e) => setNewChannelId(e.target.value)}
           />
@@ -392,6 +434,48 @@ function AdminPanel({ password, onLogout }) {
                 {p.title} <span style={{ color: "#8A9099" }}>· 조회 {p.views} · 공유 {p.shares}</span>
               </span>
               <button style={{ ...styles.btnDanger, padding: 6 }} onClick={() => deletePost(p.id)}>
+                <Trash2 size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={styles.panelBlock}>
+        <div style={styles.panelTitle}>본부 현수막 게첩 지시일 관리</div>
+        <div style={{ fontSize: 12, color: "#5B6472", marginBottom: 12 }}>
+          여기서 추가한 날짜는 메인 대시보드 미니 캘린더에 굵게 강조 표시됩니다. (supabase/migration_002_calendar.sql 실행이 선행되어야 합니다)
+        </div>
+        {directiveMsg && <div style={styles.errorBox}>{directiveMsg}</div>}
+        <form onSubmit={addDirective} style={styles.formRow}>
+          <input
+            style={{ ...styles.formInput, marginBottom: 0, maxWidth: 170 }}
+            type="date"
+            value={newDirective.date}
+            onChange={(e) => setNewDirective((d) => ({ ...d, date: e.target.value }))}
+          />
+          <input
+            style={{ ...styles.formInput, marginBottom: 0 }}
+            placeholder="메모 (선택, 예: 전국 현수막 일괄 게첩 지시)"
+            value={newDirective.memo}
+            onChange={(e) => setNewDirective((d) => ({ ...d, memo: e.target.value }))}
+          />
+          <button type="submit" style={styles.btnPrimary} disabled={!newDirective.date}>
+            추가
+          </button>
+        </form>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {directives.length === 0 && <div style={styles.emptyState}>등록된 지시일이 없습니다.</div>}
+          {directives.map((d) => (
+            <div
+              key={d.id}
+              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, padding: "6px 0", borderBottom: "1px solid #F0F1ED" }}
+            >
+              <span>
+                <strong>{d.date}</strong>
+                {d.memo && <span style={{ color: "#8A9099" }}> · {d.memo}</span>}
+              </span>
+              <button style={{ ...styles.btnDanger, padding: 6 }} onClick={() => deleteDirective(d.id)}>
                 <Trash2 size={13} />
               </button>
             </div>

@@ -5,8 +5,11 @@ import { CheckCircle2, PenLine } from "lucide-react";
 import { styles } from "@/lib/styles";
 import { tierOf } from "@/lib/regions";
 import RegionEntryForm from "./RegionEntryForm";
+import Donut from "./Donut";
+import TrendIndicator from "./TrendIndicator";
+import MiniCalendar from "./MiniCalendar";
 
-export default function BannerTab({ regions, loading, error, onRefresh }) {
+export default function BannerTab({ regions, loading, error, onRefresh, national, directives }) {
   const [selectedRegion, setSelectedRegion] = useState(regions[0]?.name ?? null);
   const [formOpen, setFormOpen] = useState(false);
 
@@ -15,20 +18,33 @@ export default function BannerTab({ regions, loading, error, onRefresh }) {
   if (regions.length === 0) return <div style={styles.emptyState}>지역 데이터가 없습니다.</div>;
 
   const region = regions.find((r) => r.name === selectedRegion) ?? regions[0];
-  const totalInstalled = regions.reduce((s, r) => s + r.installedCount, 0);
-  const totalCommittees = regions.reduce((s, r) => s + r.total, 0);
-  const totalPct = totalCommittees > 0 ? Math.round((totalInstalled / totalCommittees) * 100) : 0;
+  const totalInstalled = national?.installedCount ?? regions.reduce((s, r) => s + r.installedCount, 0);
+  const totalCommittees = national?.total ?? regions.reduce((s, r) => s + r.total, 0);
+  const totalPct = national?.pct ?? (totalCommittees > 0 ? Math.round((totalInstalled / totalCommittees) * 100) : 0);
+  const heroTier = tierOf(totalPct);
 
   return (
     <section>
-      <div style={styles.heroRow}>
-        <div style={styles.heroNumber}>{totalPct}%</div>
-        <div>
-          <div style={styles.heroLabel}>전국 게첩 완료율</div>
-          <div style={styles.heroSub}>
-            {totalInstalled}건 완료 / {totalCommittees}건 중 (총 위원회 수 기준)
+      <div className="split" style={styles.heroSplitRow}>
+        <div style={styles.heroRow}>
+          <Donut pct={totalPct} size={92} strokeWidth={10} color={heroTier.color}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#122A54", lineHeight: 1 }}>{totalPct}%</div>
+            </div>
+          </Donut>
+          <div>
+            <div style={styles.heroLabel}>전국 게첩 완료율</div>
+            <div style={styles.heroNumberRow}>
+              <span style={styles.heroNumber}>{totalPct}%</span>
+              <TrendIndicator delta={national?.trend?.deltaPct ?? null} sinceDate={national?.trend?.sinceDate} />
+            </div>
+            <div style={styles.heroSub}>
+              {totalInstalled}건 완료 / {totalCommittees}건 중 (총 위원회 수 기준)
+            </div>
           </div>
         </div>
+
+        <MiniCalendar directives={directives} />
       </div>
 
       <div className="split" style={styles.splitLayout}>
@@ -42,20 +58,15 @@ export default function BannerTab({ regions, loading, error, onRefresh }) {
                 onClick={() => setSelectedRegion(r.name)}
                 style={{
                   ...styles.regionTile,
-                  borderColor: active ? "#223A5E" : "#DEE1DB",
-                  boxShadow: active ? "0 0 0 1px #223A5E inset" : "none",
+                  boxShadow: active ? `0 0 0 2px #2196F3, ${styles.regionTile.boxShadow}` : styles.regionTile.boxShadow,
                 }}
               >
-                <div style={styles.regionName}>{r.name}</div>
-                <div style={{ ...styles.regionPct, color: tier.color }}>{r.pct}%</div>
-                <div style={styles.progressTrack}>
-                  <div
-                    style={{
-                      ...styles.progressFill,
-                      width: `${r.pct}%`,
-                      background: tier.color,
-                    }}
-                  />
+                <div style={styles.regionTileTop}>
+                  <Donut pct={r.pct} size={40} strokeWidth={5} color={tier.color} />
+                  <div>
+                    <div style={styles.regionName}>{r.name}</div>
+                    <div style={{ ...styles.regionPct, color: tier.color }}>{r.pct}%</div>
+                  </div>
                 </div>
                 <div style={styles.regionMeta}>
                   {r.installedCount}/{r.total || "-"}개 위원회
