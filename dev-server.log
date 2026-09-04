@@ -1,0 +1,70 @@
+
+> pr-dashboard@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1183ms
+ ○ Compiling / ...
+ ✓ Compiled / in 884ms (1551 modules)
+ GET / 200 in 1030ms
+ GET / 200 in 42ms
+ ✓ Compiled /api/directives in 177ms (855 modules)
+ ✓ Compiled (859 modules)
+ GET /api/weekly-theme 500 in 759ms
+ GET /api/directives 500 in 760ms
+ GET /api/weekly-theme 500 in 61ms
+ GET /api/directives 500 in 68ms
+ GET /api/region-settings 200 in 969ms
+ GET /api/region-settings 200 in 300ms
+ ✓ Compiled in 290ms (775 modules)
+ ✓ Compiled in 1229ms (1565 modules)
+ ✓ Compiled /api/directives in 146ms (855 modules)
+ ✓ Compiled (859 modules)
+ GET /api/directives 500 in 612ms
+ GET /api/weekly-theme 500 in 614ms
+ GET /api/region-settings 200 in 848ms
+ GET / 200 in 218ms
+ GET /api/directives 500 in 436ms
+ GET /api/weekly-theme 500 in 438ms
+ GET /api/directives 500 in 80ms
+ GET /api/weekly-theme 500 in 90ms
+ GET /api/region-settings 200 in 586ms
+ GET /api/region-settings 200 in 200ms
+ ✓ Compiled /api/sns in 440ms (862 modules)
+ ✓ Compiled (864 modules)
+ GET /api/sns 200 in 796ms
+ GET /api/youtube 200 in 874ms
+ GET / 200 in 99ms
+ GET /api/directives 500 in 414ms
+ GET /api/region-settings 200 in 2246ms
+ GET /api/weekly-theme 500 in 67ms
+ GET / 200 in 40ms
+ GET /api/directives 200 in 838ms
+ GET /api/weekly-theme 200 in 143ms
+ GET /api/directives 200 in 546ms
+ POST /api/directives 200 in 142ms
+ GET /api/directives 200 in 138ms
+ POST /api/directives 401 in 7ms
+ DELETE /api/directives 200 in 72ms
+ GET / 200 in 66ms
+ GET /api/weekly-theme 200 in 195ms
+ GET /api/directives 200 in 211ms
+ GET /api/directives 200 in 65ms
+ GET /api/weekly-theme 200 in 141ms
+ GET /api/region-settings 200 in 508ms
+ GET /api/region-settings 200 in 329ms
+ GET /api/sns 200 in 60ms
+ GET /api/youtube 200 in 824ms
+ GET / 200 in 57ms
+ GET /api/directives 200 in 481ms
+ GET /api/weekly-theme 200 in 483ms
+ GET /api/directives 200 in 64ms
+ GET /api/weekly-theme 200 in 135ms
+ GET /api/region-settings 200 in 628ms
+ GET /api/region-settings 200 in 322ms
+ GET /api/sns 200 in 141ms
+ GET /api/youtube 200 in 189ms
