@@ -130,7 +130,7 @@ export default function RegionEntryForm({ region, committees, onClose, onUpdated
                   key={c.id}
                   style={{
                     ...styles.committeeRow,
-                    borderLeftColor: c.installed ? "#2F7C5C" : "#B8452C",
+                    borderLeftColor: c.installed ? "#2549F5" : "#ee015c",
                   }}
                 >
                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -146,8 +146,8 @@ export default function RegionEntryForm({ region, committees, onClose, onUpdated
                         flex: "none",
                         padding: "5px 10px",
                         fontSize: 11.5,
-                        color: c.installed ? "#2F7C5C" : "#5B6472",
-                        borderColor: c.installed ? "#2F7C5C" : "#DEE1DB",
+                        color: c.installed ? "#2549F5" : "#5B6472",
+                        borderColor: c.installed ? "#2549F5" : "#DEE1DB",
                       }}
                       disabled={loading}
                       onClick={() =>

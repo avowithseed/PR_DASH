@@ -34,7 +34,9 @@ export default function MiniCalendar({ directives = [] }) {
       if (!d?.date) continue;
       const key = d.date.slice(0, 10);
       const list = map.get(key) ?? [];
-      list.push(d.memo || "게첩 지시");
+      // memo가 없는 지시일도 있을 수 있어서(날짜만 강조), 빈 memo는 임의 문구로
+      // 채우지 않고 null로 남겨둡니다 - 표시 여부는 렌더링 쪽에서 따로 판단합니다.
+      list.push(d.memo?.trim() || null);
       map.set(key, list);
     }
     return map;
@@ -66,12 +68,14 @@ export default function MiniCalendar({ directives = [] }) {
           const key = dateKey(d);
           const memos = directiveMap.get(key);
           const isDirective = Boolean(memos);
+          // 같은 날짜에 지시가 여러 건이면 이어 붙이고, memo 없는 지시만 있으면 빈 문자열(날짜만 강조).
+          const memoText = memos ? memos.filter(Boolean).join(" · ") : "";
           const isToday = key === todayKey;
           const isCurrentMonth = d.getMonth() === today.getMonth();
           return (
             <div
               key={key}
-              title={memos ? `💙 ${memos.join(", ")}` : undefined}
+              title={isDirective ? `💙 ${memoText || "게첩 지시일"}` : undefined}
               style={styles.calendarDay}
             >
               <span
@@ -84,6 +88,7 @@ export default function MiniCalendar({ directives = [] }) {
               >
                 {d.getDate()}
               </span>
+              {memoText && <span style={styles.calendarDayMemo}>{memoText}</span>}
             </div>
           );
         })}

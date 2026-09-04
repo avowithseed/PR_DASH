@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, PenLine } from "lucide-react";
-import { styles, colors } from "@/lib/styles";
+import { styles } from "@/lib/styles";
 import { tierOf } from "@/lib/regions";
 import RegionEntryForm from "./RegionEntryForm";
 import Donut from "./Donut";
@@ -29,8 +29,8 @@ export default function BannerTab({ regions, loading, error, onRefresh, national
 
       <div className="split" style={styles.heroSplitRow}>
         <div style={styles.heroRow}>
-          {/* 히어로 도넛은 구간과 무관하게 항상 진한 블루로 고정해서, 완료율이 낮아도(연한 톤) 잘 보이게 합니다. */}
-          <Donut pct={totalPct} size={148} strokeWidth={16} color={colors.accentDark}>
+          {/* 히어로 도넛은 구간과 무관하게 항상 포인트 블루로 고정해서, 완료율이 낮아도 잘 보이게 합니다. */}
+          <Donut pct={totalPct} size={148} strokeWidth={16} color="#2549F5">
             <div
               style={{
                 fontSize: 36,
@@ -116,7 +116,7 @@ export default function BannerTab({ regions, loading, error, onRefresh, national
                 key={c.id}
                 style={{
                   ...styles.committeeRow,
-                  borderLeftColor: c.installed ? "#2F7C5C" : "#B8452C",
+                  borderLeftColor: c.installed ? "#2549F5" : "#ee015c",
                 }}
               >
                 <div style={styles.committeeName}>{c.name}</div>
