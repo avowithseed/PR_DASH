@@ -129,3 +129,30 @@ create policy "public read directives" on directives for select using (true);
 
 drop policy if exists "public read stats_snapshots" on stats_snapshots;
 create policy "public read stats_snapshots" on stats_snapshots for select using (true);
+
+-- 9월 2일 현수막 게첩 지시 (요청받은 초기 데이터). directives에 date용 유니크 제약이 없어서
+-- 이 파일을 여러 번 실행해도 중복 삽입되지 않도록 존재 여부를 먼저 확인합니다.
+insert into directives (date, memo)
+select '2026-09-02', '현수막 게첩 지시'
+where not exists (select 1 from directives where date = '2026-09-02');
+
+-- 이 주의 홍보기조 (단일 행짜리 설정 테이블, 관리자가 /admin에서 수정)
+create table if not exists weekly_theme (
+  id integer primary key default 1,
+  content text not null default '',
+  updated_at timestamptz not null default now(),
+  constraint weekly_theme_singleton check (id = 1)
+);
+
+drop trigger if exists trg_weekly_theme_updated on weekly_theme;
+create trigger trg_weekly_theme_updated
+  before update on weekly_theme
+  for each row execute function set_updated_at();
+
+insert into weekly_theme (id, content)
+values (1, '민티07 파일럿 홍보, 정부 민영화 저지 성과홍보 (KTX, SRT통합)')
+on conflict (id) do nothing;
+
+alter table weekly_theme enable row level security;
+drop policy if exists "public read weekly_theme" on weekly_theme;
+create policy "public read weekly_theme" on weekly_theme for select using (true);

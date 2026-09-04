@@ -7,13 +7,14 @@
 - **YouTube 연동**: 관리자가 `/admin`에서 채널 ID를 등록하면 YouTube Data API v3로 구독자 수·조회수·최근 영상 성과를 자동 수집합니다 (15분 캐시, 수동 새로고침 가능).
 - **SNS 성과**: YouTube 외 SNS 콘텐츠는 관리자가 `/admin`에서 수동으로 입력합니다.
 - **컨텐츠 전파현황 탭**: 이번 요청 범위 밖이라 샘플 데이터로 남겨뒀습니다. 실데이터를 붙이려면 위원회별 재게시 로그 입력/집계가 추가로 필요합니다.
-- **미니 캘린더**: 현수막 게첩 현황 탭 상단에 이번 달 캘린더가 표시되고, 관리자가 `/admin`에서 등록한 "본부 게첩 지시일"이 굵게 강조됩니다. `supabase/migration_002_calendar.sql` 실행이 선행되어야 동작합니다 (아래 참고).
+- **미니 캘린더**: 현수막 게첩 현황 탭 상단에 2주(이번 주 + 다음 주)치 캘린더가 표시되고, 관리자가 `/admin`에서 등록한 "본부 게첩 지시일"이 원형 블루 강조로 표시됩니다. `supabase/migration_002_calendar.sql` 실행이 선행되어야 동작합니다 (아래 참고).
 - **전국 게첩완료율 증감 표시**: 전일 스냅샷과 비교한 ▲▼ 인디케이터를 보여줍니다. 배포 첫날은 비교 대상이 없어 "신규"로 표시되고, 다음 날부터 실제 증감이 나타납니다.
+- **이 주의 홍보기조 배너**: 현수막 게첩 현황 탭 최상단에 블루 그라데이션 강조 배너로 표시됩니다. 문구는 관리자가 `/admin`에서 수정합니다. `supabase/migration_003_weekly_theme.sql` 실행이 선행되어야 동작합니다.
 
 ## 1. Supabase 프로젝트 준비
 
 1. https://supabase.com 에서 무료 프로젝트를 만듭니다.
-2. 프로젝트의 **SQL Editor**를 열고 `supabase/schema.sql` 파일 내용 전체를 붙여넣어 실행합니다. (테이블 생성 + 16개 지역 시드 + RLS 정책까지 한 번에 적용됩니다. 이미 초기 설정을 마친 프로젝트라면 `supabase/migration_002_calendar.sql`만 추가로 실행하면 됩니다 - 미니 캘린더/게첩 지시일/완료율 증감 표시 기능에 필요합니다.)
+2. 프로젝트의 **SQL Editor**를 열고 `supabase/schema.sql` 파일 내용 전체를 붙여넣어 실행합니다. (테이블 생성 + 16개 지역 시드 + RLS 정책까지 한 번에 적용됩니다. 이미 초기 설정을 마친 프로젝트라면 `supabase/migration_002_calendar.sql`, `supabase/migration_003_weekly_theme.sql`만 추가로 실행하면 됩니다.)
 3. **Project Settings → API**에서 다음 값을 확인해둡니다.
    - `Project URL`
    - `anon public` 키
@@ -55,13 +56,14 @@ npm run dev
 
 ```
 app/
-  page.jsx              대시보드 메인 (탭: 게첩 현황 / 콘텐츠 성과 / 재확산)
+  page.jsx              대시보드 메인 (탭: 게첩 현황 / 유튜브 현황 / 컨텐츠 전파현황)
   admin/page.jsx         관리자 페이지
   api/
-    region-settings/     지역별 총 위원회 수 조회/설정
+    region-settings/     지역별 총 위원회 수 조회/설정 (전국 완료율·전일 대비 증감 포함)
     region-pin/           지역 PIN 설정(관리자) / 확인(지역위원회)
     committees/           위원회별 게첩 현황 조회/입력/삭제 (PIN 필요)
     directives/            본부 게첩 지시일 조회/입력/삭제 (관리자)
+    weekly-theme/          이 주의 홍보기조 조회/수정 (관리자)
     youtube/               YouTube 채널 통계 조회(캐시)
     youtube/channels/     YouTube 채널 등록/삭제 (관리자)
     sns/                   SNS 콘텐츠 성과 조회/입력/삭제 (관리자)

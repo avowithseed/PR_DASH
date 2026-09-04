@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { styles } from "@/lib/styles";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -9,16 +9,24 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-function dateKey(y, m, d) {
-  return `${y}-${pad2(m + 1)}-${pad2(d)}`;
+function dateKey(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-// 현수막 게첩 지시일을 표시하는 이번 달 미니 캘린더. directives는 [{date: "YYYY-MM-DD", memo}] 배열.
+// 현수막 게첩 지시일을 표시하는 2주(이번 주 + 다음 주) 캘린더. directives는 [{date: "YYYY-MM-DD", memo}] 배열.
 export default function MiniCalendar({ directives = [] }) {
-  const [cursor] = useState(() => new Date());
-  const year = cursor.getFullYear();
-  const month = cursor.getMonth(); // 0-based
-  const todayKey = dateKey(year, month, cursor.getDate());
+  const today = useMemo(() => new Date(), []);
+  const todayKey = dateKey(today);
+
+  // 이번 주 일요일부터 14일치(2주)를 보여줍니다.
+  const days = useMemo(() => {
+    const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
+    return Array.from({ length: 14 }, (_, i) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      return d;
+    });
+  }, [today]);
 
   const directiveMap = useMemo(() => {
     const map = new Map();
@@ -32,23 +40,16 @@ export default function MiniCalendar({ directives = [] }) {
     return map;
   }, [directives]);
 
-  const cells = useMemo(() => {
-    const firstWeekday = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const list = [];
-    for (let i = 0; i < firstWeekday; i++) list.push(null);
-    for (let d = 1; d <= daysInMonth; d++) list.push(d);
-    return list;
-  }, [year, month]);
+  const first = days[0];
+  const last = days[days.length - 1];
+  const rangeLabel = `${first.getMonth() + 1}.${first.getDate()} ~ ${last.getMonth() + 1}.${last.getDate()}`;
 
   return (
     <div style={styles.calendarCard}>
       <div style={styles.calendarHeader}>
-        <div style={styles.calendarTitle}>
-          {year}년 {month + 1}월
-        </div>
+        <div style={styles.calendarTitle}>{rangeLabel} · 2주</div>
         <div style={styles.calendarLegend}>
-          <span style={styles.calendarLegendDot} /> 게첩 지시일
+          <span aria-hidden>💙</span> 게첩 지시일
         </div>
       </div>
 
@@ -61,23 +62,28 @@ export default function MiniCalendar({ directives = [] }) {
       </div>
 
       <div style={styles.calendarGrid}>
-        {cells.map((d, i) => {
-          if (d === null) return <div key={`blank-${i}`} />;
-          const key = dateKey(year, month, d);
+        {days.map((d) => {
+          const key = dateKey(d);
           const memos = directiveMap.get(key);
           const isDirective = Boolean(memos);
           const isToday = key === todayKey;
+          const isCurrentMonth = d.getMonth() === today.getMonth();
           return (
             <div
               key={key}
-              title={memos ? memos.join(", ") : undefined}
-              style={{
-                ...styles.calendarDay,
-                ...(isDirective ? styles.calendarDayDirective : null),
-                ...(isToday ? styles.calendarDayToday : null),
-              }}
+              title={memos ? `💙 ${memos.join(", ")}` : undefined}
+              style={styles.calendarDay}
             >
-              {d}
+              <span
+                style={{
+                  ...styles.calendarDayBadge,
+                  ...(isCurrentMonth ? null : { color: "#B7BFCF" }),
+                  ...(isToday ? styles.calendarDayTodayBadge : null),
+                  ...(isDirective ? styles.calendarDayDirectiveBadge : null),
+                }}
+              >
+                {d.getDate()}
+              </span>
             </div>
           );
         })}

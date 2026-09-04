@@ -52,11 +52,11 @@ export default function AdminPage() {
     setLoginInput("");
   }
 
-  if (checking) return <div style={styles.page}>확인 중...</div>;
+  if (checking) return <div className="page-bg-wave" style={styles.page}>확인 중...</div>;
 
   if (!authed) {
     return (
-      <div style={styles.page}>
+      <div className="page-bg-wave" style={styles.page}>
         <div style={{ maxWidth: 360, margin: "80px auto" }}>
           <div style={styles.formTitle}>관리자 로그인</div>
           <div style={styles.formSub}>.env.local의 ADMIN_PASSWORD로 로그인하세요.</div>
@@ -110,6 +110,11 @@ function AdminPanel({ password, onLogout }) {
   const [newDirective, setNewDirective] = useState({ date: "", memo: "" });
   const [directiveMsg, setDirectiveMsg] = useState("");
 
+  const [weeklyThemeDraft, setWeeklyThemeDraft] = useState("");
+  const [weeklyThemeSavedAt, setWeeklyThemeSavedAt] = useState(null);
+  const [weeklyThemeMsg, setWeeklyThemeMsg] = useState("");
+  const [savingTheme, setSavingTheme] = useState(false);
+
   const loadAll = useCallback(async () => {
     setLoadError("");
     try {
@@ -132,6 +137,14 @@ function AdminPanel({ password, onLogout }) {
       setDirectives(dJson.directives ?? []);
     } catch (err) {
       setDirectiveMsg(err.message);
+    }
+    // weekly_theme도 마찬가지로 별도 마이그레이션 대상이라 독립적으로 로딩합니다.
+    try {
+      const wJson = await fetchJson("/api/weekly-theme");
+      setWeeklyThemeDraft(wJson.theme?.content ?? "");
+      setWeeklyThemeSavedAt(wJson.theme?.updated_at ?? null);
+    } catch (err) {
+      setWeeklyThemeMsg(err.message);
     }
   }, []);
 
@@ -267,8 +280,27 @@ function AdminPanel({ password, onLogout }) {
     }
   }
 
+  async function saveWeeklyTheme(e) {
+    e.preventDefault();
+    setWeeklyThemeMsg("");
+    setSavingTheme(true);
+    try {
+      const json = await fetchJson("/api/weekly-theme", {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify({ content: weeklyThemeDraft }),
+      });
+      setWeeklyThemeSavedAt(json.theme?.updated_at ?? null);
+      setWeeklyThemeMsg("저장됨");
+    } catch (err) {
+      setWeeklyThemeMsg(err.message);
+    } finally {
+      setSavingTheme(false);
+    }
+  }
+
   return (
-    <div style={styles.page}>
+    <div className="page-bg-wave" style={styles.page}>
       <header style={styles.header}>
         <div>
           <div style={styles.eyebrow}>
@@ -289,6 +321,32 @@ function AdminPanel({ password, onLogout }) {
       </header>
 
       {loadError && <div style={styles.errorBox}>{loadError}</div>}
+
+      <div style={styles.panelBlock}>
+        <div style={styles.panelTitle}>이 주의 홍보기조</div>
+        <div style={{ fontSize: 12, color: "#5B6472", marginBottom: 12 }}>
+          메인 대시보드 상단에 강조 배너로 표시됩니다. (supabase/migration_003_weekly_theme.sql 실행이 선행되어야 합니다)
+        </div>
+        {weeklyThemeMsg && <div style={weeklyThemeMsg === "저장됨" ? { ...styles.errorBox, background: "#E4F6EA", borderColor: "#BFE6CC", color: "#1E7A46" } : styles.errorBox}>{weeklyThemeMsg}</div>}
+        <form onSubmit={saveWeeklyTheme}>
+          <textarea
+            style={{ ...styles.formInput, minHeight: 64, resize: "vertical" }}
+            value={weeklyThemeDraft}
+            onChange={(e) => setWeeklyThemeDraft(e.target.value)}
+            placeholder="예: 민티07 파일럿 홍보, 정부 민영화 저지 성과홍보 (KTX, SRT통합)"
+          />
+          <div style={styles.formButtonRow}>
+            {weeklyThemeSavedAt && (
+              <span style={{ fontSize: 11.5, color: "#8A9099", marginRight: "auto" }}>
+                마지막 수정: {new Date(weeklyThemeSavedAt).toLocaleString("ko-KR")}
+              </span>
+            )}
+            <button type="submit" style={styles.btnPrimary} disabled={savingTheme || !weeklyThemeDraft.trim()}>
+              저장
+            </button>
+          </div>
+        </form>
+      </div>
 
       <div style={styles.panelBlock}>
         <div style={styles.panelTitle}>지역별 총 위원회 수 · PIN 설정</div>

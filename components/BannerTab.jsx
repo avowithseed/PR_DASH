@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { CheckCircle2, PenLine } from "lucide-react";
-import { styles } from "@/lib/styles";
+import { styles, colors } from "@/lib/styles";
 import { tierOf } from "@/lib/regions";
 import RegionEntryForm from "./RegionEntryForm";
 import Donut from "./Donut";
 import TrendIndicator from "./TrendIndicator";
 import MiniCalendar from "./MiniCalendar";
+import WeeklyThemeBanner from "./WeeklyThemeBanner";
 
-export default function BannerTab({ regions, loading, error, onRefresh, national, directives }) {
+export default function BannerTab({ regions, loading, error, onRefresh, national, directives, weeklyTheme }) {
   const [selectedRegion, setSelectedRegion] = useState(regions[0]?.name ?? null);
   const [formOpen, setFormOpen] = useState(false);
 
@@ -21,23 +22,30 @@ export default function BannerTab({ regions, loading, error, onRefresh, national
   const totalInstalled = national?.installedCount ?? regions.reduce((s, r) => s + r.installedCount, 0);
   const totalCommittees = national?.total ?? regions.reduce((s, r) => s + r.total, 0);
   const totalPct = national?.pct ?? (totalCommittees > 0 ? Math.round((totalInstalled / totalCommittees) * 100) : 0);
-  const heroTier = tierOf(totalPct);
 
   return (
     <section>
+      <WeeklyThemeBanner theme={weeklyTheme} />
+
       <div className="split" style={styles.heroSplitRow}>
         <div style={styles.heroRow}>
-          <Donut pct={totalPct} size={92} strokeWidth={10} color={heroTier.color}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: "#122A54", lineHeight: 1 }}>{totalPct}%</div>
+          {/* 히어로 도넛은 구간과 무관하게 항상 진한 블루로 고정해서, 완료율이 낮아도(연한 톤) 잘 보이게 합니다. */}
+          <Donut pct={totalPct} size={148} strokeWidth={16} color={colors.accentDark}>
+            <div
+              style={{
+                fontSize: 36,
+                fontWeight: 700,
+                color: "#2549F5",
+                lineHeight: 1,
+                fontFamily: "'GmarketSans', 'Pretendard', sans-serif",
+              }}
+            >
+              {totalPct}%
             </div>
           </Donut>
           <div>
             <div style={styles.heroLabel}>전국 게첩 완료율</div>
-            <div style={styles.heroNumberRow}>
-              <span style={styles.heroNumber}>{totalPct}%</span>
-              <TrendIndicator delta={national?.trend?.deltaPct ?? null} sinceDate={national?.trend?.sinceDate} />
-            </div>
+            <TrendIndicator delta={national?.trend?.deltaPct ?? null} sinceDate={national?.trend?.sinceDate} size={14.5} />
             <div style={styles.heroSub}>
               {totalInstalled}건 완료 / {totalCommittees}건 중 (총 위원회 수 기준)
             </div>

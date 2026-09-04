@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Radio, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { styles } from "@/lib/styles";
 import { fetchJson } from "@/lib/fetchJson";
 import BannerTab from "@/components/BannerTab";
@@ -17,6 +17,7 @@ export default function PRDashboard() {
   const [regionsError, setRegionsError] = useState("");
 
   const [directives, setDirectives] = useState([]);
+  const [weeklyTheme, setWeeklyTheme] = useState(null);
 
   const [youtube, setYoutube] = useState(null);
   const [sns, setSns] = useState([]);
@@ -48,6 +49,16 @@ export default function PRDashboard() {
     }
   }, []);
 
+  const loadWeeklyTheme = useCallback(async () => {
+    try {
+      const json = await fetchJson("/api/weekly-theme");
+      setWeeklyTheme(json.theme ?? null);
+    } catch {
+      // 마이그레이션 전이면 조용히 배너를 숨깁니다.
+      setWeeklyTheme(null);
+    }
+  }, []);
+
   const loadContent = useCallback(async (refresh = false) => {
     setContentError("");
     if (refresh) setRefreshingYoutube(true);
@@ -69,7 +80,8 @@ export default function PRDashboard() {
   useEffect(() => {
     loadRegions();
     loadDirectives();
-  }, [loadRegions, loadDirectives]);
+    loadWeeklyTheme();
+  }, [loadRegions, loadDirectives, loadWeeklyTheme]);
 
   // 콘텐츠 탭에 처음 들어갈 때 한 번만 불러옵니다. youtube/sns 상태를 의존성에 넣으면
   // loadContent()가 매번 새 배열/객체 참조를 만들어 effect가 다시 실행되고,
@@ -83,21 +95,24 @@ export default function PRDashboard() {
 
   const tabs = [
     { id: "banner", label: "현수막 게첩 현황" },
-    { id: "content", label: "콘텐츠 성과" },
+    { id: "content", label: "유튜브 현황" },
     { id: "spread", label: "컨텐츠 전파현황" },
   ];
 
   return (
-    <div style={styles.page}>
-      <header style={styles.header}>
+    <div className="page-bg-wave" style={styles.page}>
+      <header style={styles.dashboardHeaderRow}>
+        <div style={styles.headerSpacer} aria-hidden />
         <div>
-          <div style={styles.eyebrow}>더불어민주당 홍보위원회</div>
-          <h1 style={styles.title}>홍보통합 대시보드</h1>
+          <div style={styles.dashboardEyebrow}>더불어민주당 홍보위원회</div>
+          <h1 style={styles.dashboardTitle}>
+            홍보통합 <span style={styles.titleAccent}>대시보드</span>
+          </h1>
         </div>
-        <div style={styles.headerRight}>
-          <div style={styles.updatedAt}>
-            <Radio size={14} color="#2F7C5C" />
-            실시간 연동
+        <div style={styles.headerRightEnd}>
+          <div style={styles.liveBadge}>
+            <span className="live-dot" style={styles.liveBadgeDot} />
+            실시간 연동 중
           </div>
           <a href="/admin" style={styles.adminLink}>
             <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -128,6 +143,7 @@ export default function PRDashboard() {
           regions={regions}
           national={national}
           directives={directives}
+          weeklyTheme={weeklyTheme}
           loading={regionsLoading}
           error={regionsError}
           onRefresh={loadRegions}

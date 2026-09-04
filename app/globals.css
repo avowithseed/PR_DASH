@@ -1,5 +1,14 @@
+/* 지마켓 산스 - 헤드카피 전용 */
+@font-face {
+  font-family: 'GmarketSans';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+}
+
 * { box-sizing: border-box; }
 html, body { padding: 0; margin: 0; min-height: 100%; }
+body { font-family: 'Pretendard', -apple-system, sans-serif; }
 button { font-family: inherit; cursor: pointer; }
 button:focus-visible, [tabindex]:focus-visible, input:focus-visible {
   outline: 2px solid #223A5E;
@@ -9,6 +18,39 @@ a { color: inherit; }
 
 .spin { animation: spin 0.8s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.live-dot { animation: live-pulse 2s ease-in-out infinite; }
+@keyframes live-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(47, 190, 100, 0.25); }
+  50% { box-shadow: 0 0 0 6px rgba(47, 190, 100, 0.12); }
+}
+
+/* 화이트 배경 위에서 은은하게 계속 움직이는 블루 톤 그라데이션 물결.
+   페이지 배경 자체는 흰색(lib/styles.js의 page.background)이고, 이 레이어가
+   그 뒤에서 큰 블러 그라데이션 덩어리들의 위치를 천천히 옮겨 물결처럼 보이게 합니다. */
+.page-bg-wave::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1000px 620px at 8% 8%, rgba(33, 150, 243, 0.14), transparent 60%),
+    radial-gradient(900px 640px at 95% 15%, rgba(13, 71, 161, 0.10), transparent 60%),
+    radial-gradient(950px 800px at 45% 105%, rgba(144, 202, 249, 0.16), transparent 60%);
+  background-repeat: no-repeat;
+  background-size: 160% 160%;
+  animation: wave-drift 22s ease-in-out infinite;
+}
+@keyframes wave-drift {
+  0%   { background-position: 0% 0%, 100% 0%, 40% 100%; }
+  50%  { background-position: 12% 15%, 85% 25%, 55% 85%; }
+  100% { background-position: 0% 0%, 100% 0%, 40% 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-bg-wave::before, .live-dot { animation: none; }
+}
 
 @media (max-width: 720px) {
   .banner-grid { grid-template-columns: repeat(2, 1fr) !important; }

@@ -26,3 +26,9 @@ create policy "public read directives" on directives for select using (true);
 
 drop policy if exists "public read stats_snapshots" on stats_snapshots;
 create policy "public read stats_snapshots" on stats_snapshots for select using (true);
+
+-- 9월 2일 현수막 게첩 지시 (요청받은 초기 데이터). directives에 date용 유니크 제약이 없어서
+-- 이 파일을 여러 번 실행해도 중복 삽입되지 않도록 존재 여부를 먼저 확인합니다.
+insert into directives (date, memo)
+select '2026-09-02', '현수막 게첩 지시'
+where not exists (select 1 from directives where date = '2026-09-02');
