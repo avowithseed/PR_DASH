@@ -77,3 +77,11 @@
  GET /api/sns 200 in 660ms
  GET /api/youtube 200 in 755ms
  POST /api/youtube/channels 500 in 121ms
+ GET / 200 in 271ms
+ GET /api/directives 200 in 151ms
+ GET /api/weekly-theme 200 in 152ms
+ GET /api/directives 200 in 74ms
+ GET /api/weekly-theme 200 in 74ms
+ GET /api/region-settings 200 in 284ms
+ GET /api/region-settings 200 in 289ms
+[?25h
